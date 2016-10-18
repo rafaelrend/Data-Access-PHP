@@ -1,7 +1,7 @@
 <?
 interface IDbPersist{
        
-	   function describleTable($nome_table);
+	   function describeTable($nome_table);
 	   
 	   function connect();
 	   

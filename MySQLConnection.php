@@ -1,7 +1,7 @@
 <?php
 class MYSQLConnection implements IDbPersist{
 
-       function describleTable($name_table){
+       function describeTable($name_table){
 	   
 	   
               $sql = "SHOW /*!32332 FULL */ COLUMNS FROM `".$name_table."` ;";
@@ -20,41 +20,42 @@ class MYSQLConnection implements IDbPersist{
 			  return $saida;
 	   
 	   }
-	   var $default_db = "MYSQL_CONN";
-	   public static $_Conn;
-	   
+           
+          public $_Conn;
+	  public $_nomeConn= "conn_mysql";
+	  var $arr_conection;
+          
+          
+            function __construct( $arr_conection = array(), $name_conn = "conn_mysql"  ){
+
+                   $this->arr_conection = $arr_conection;
+                   $this->_nomeConn = $name_conn;
+
+            } 
+          
+          
+          
 	   function connect(){
 	   
-	    $conn = null;
-		
-		$mysql_host = constant("mysql_host");
-		$mysql_user = constant("mysql_user");
-		$mysql_pass = constant("mysql_pass");
-		$mysql_initialcommand = constant("mysql_initialcommand");
-		$mysql_db = constant("mysql_db");
+               
+               if (is_null($this->arr_conection))
+                   return;
+            
+                  $arr_conection = $this->arr_conection;
+               
+		$mysql_host = $arr_conection["host"];
+		$mysql_user = $arr_conection["user"];
+		$mysql_pass = $arr_conection["password"];
+		$mysql_initialcommand =  @$arr_conection["initialcommand"] ;
+		$mysql_db =  @$arr_conection["dbname"];
 		$port = 3306;
+                
+                if ( @$arr_conection["port"] != "" )
+                    $mysql_host = $arr_conection["host"].":". $arr_conection["port"];
+                
 		
-		if ( @$_SESSION[SessionFacade::nomeSchema(). "_linha_query"] != "" ){
-			
-			
-			$arp = explode("\t", @$_SESSION[SessionFacade::nomeSchema(). "_linha_query"]);	
-			
-			
-			$mysql_host = $arp[1];
-			$mysql_db = $arp[3];
-			$mysql_user = $arp[4];
-			$mysql_pass = $arp[5];
-			$port = $arp[6];
-			
-		}else{
-			//die("conexão vazia!");
-			//return;	
-		}
-	
-	       // $_SESSION["_linha_row_query"] =$sel_base;
-           //  $_SESSION["_linha_query"]
 	  
-		$conn =   mysql_connect($mysql_host,$mysql_user,$mysql_pass);
+		$conn =   mysql_connect($mysql_host,$mysql_user,$mysql_pass, true);
 									 
 									 if ( !$conn ){
 										  die(" trouble when tried connect to mysql host ");
@@ -70,40 +71,19 @@ class MYSQLConnection implements IDbPersist{
 		     mysql_select_db($mysql_db, $conn);
 			
 			 
-			 $GLOBALS[$this->default_db] = $conn;
+			 $GLOBALS[$this->_nomeConn] = $conn;
 			 
 	   }
 	
-	function newConnection( $host, $user, $pass, $initialcommand, $db , $nome_db){
-		
-		$conn =   mysql_connect($host,$user,$pass);
-		
-		if ( !$conn ){
-			die(" trouble when tried connect to mysql host ". $host);
-		}
-		
-		if ( $initialcommand != "" ){		
-			mysql_query($initialcommand, $conn);
-		}
-		
-		
-		mysql_select_db($db, $conn);
-		
-		$this->default_db = $nome_db;
-		
-		$GLOBALS[$this->default_db] = $conn;
-		return $this;
-		
-	}
 	   
 	   
 	   function getConnection(){
 	   
-	         if ( ! isset( $GLOBALS[$this->default_db]  ))
+	         if ( ! isset( $GLOBALS[$this->_nomeConn]  ))
 			      $this->connect();
 				  
 		
-		       return $GLOBALS[$this->default_db];
+		       return $GLOBALS[$this->_nomeConn];
 	   
 	   }
 	   
@@ -113,7 +93,7 @@ class MYSQLConnection implements IDbPersist{
 		   
 		   mysql_close( $conn);
 		   
-		   $GLOBALS[$this->default_db] = null;
+		   $GLOBALS[$this->_nameConn] = null;
 	   
 	   }
 	   

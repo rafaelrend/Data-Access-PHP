@@ -3,7 +3,7 @@
 class MSSQLConnection implements IDbPersist{
 
 	//Retrieve a key=>value array with name of fields from specified table
-	function describleTable($name_table){
+	function describeTable($name_table){
 		
 		
 		$sql = " 
@@ -38,27 +38,47 @@ class MSSQLConnection implements IDbPersist{
 		
 	}
 	
-	public static $_Conn;
-	public static $_nameConn = "conn_mssql";
-	
+          public $_Conn;
+	  public $_nomeConn= "conn_mssql";
+	  var $arr_conection;
+          
+          
+            function __construct( $arr_conection = array(), $name_conn = "conn_mssql"  ){
+
+                   $this->arr_conection = $arr_conection;
+                   $this->_nomeConn = $name_conn;
+
+            } 
+          
+        
+        
 	
 	//Connect to MS SQL DataBase
 	function connect(){
 		
 		
+               if (is_null($this->arr_conection))
+                   return;
+            
+                  $arr_conection = $this->arr_conection;
+                  
+                  $host = $arr_conection["host"];
+                  
+                  if ( @$arr_conection["port"] != "" )
+                      $host .=",".$arr_conection["port"];
 		
 		//$str_conection = "host=".constant("pg_host")." port=".constant("pg_port")." dbname=".constant("pg_database")." user=".constant("pg_user")." password=".constant("pg_pass");
 	
-		$conn =   mssql_connect(constant("mssql_host"),constant("mssql_user"),constant("mssql_pass")) or die (" error on connect ");
+		$conn =   mssql_connect($arr_conection["host"],$arr_conection["user"],$arr_conection["password"]) or die (" error on connect ");
 		
-		$select = mssql_select_db(constant("mssql_database")) or die($this->error_msg("Error with select database"));
+		$select = mssql_select_db($arr_conection["dbname"]) or die($this->error_msg("Error with select database"));
 		
 		
 		if ( !$conn ){
 			die(" trouble when trying connect to MS SQL host ");
 		}
 		
-		$GLOBALS[MSSQLConnection::$_nameConn] = $conn;
+		$GLOBALS[$this->_nameConn] = $conn;
 		//MSSQLConnection::$_Conn = $conn;
 		
 	}
@@ -66,13 +86,13 @@ class MSSQLConnection implements IDbPersist{
 	//Get Current Connection.. if null  create new connection
 	function getConnection(){
 		
-		if ( ! isset( $GLOBALS[MSSQLConnection::$_nameConn]  ))
+		if ( ! isset( $GLOBALS[$this->_nameConn] ))
 			$this->connect();
 		
 		
 		//MSSQLConnection::$_Conn
 		
-		return  $GLOBALS[MSSQLConnection::$_nameConn];
+		return  $GLOBALS[$this->_nameConn];
 		//return MSSQLConnection::$_Conn;
 		
 	}
@@ -84,7 +104,7 @@ class MSSQLConnection implements IDbPersist{
 		
 		mssql_close( $conn);
 		
-		MSSQLConnection::$_Conn = null;
+		$GLOBALS[$this->_nameConn] = null;
 		
 	}
 	

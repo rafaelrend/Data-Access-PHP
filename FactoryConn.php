@@ -2,22 +2,39 @@
 
 require_once("PostGreSQLConnection.php");
 require_once("MySQLConnection.php");
+require_once("ODBCConnection.php");
+require_once("MSSQLConnection.php");
 
 class FactoryConn{
     
-    static function getConn( $tipo ){
+    static function getConn( $tipo, $arr_conection, $var_name = "connection_system" ){
     
               $saida = null;
               
-              if ( $tipo == "postgres")
-                  $saida = new PostGreSQLConnection();
+              if ( $tipo == self::DB_POSTGRESQL)
+                  $saida = new PostGreSQLConnection ($arr_conection, $var_name);
               
               
-              if ( $tipo == "mysql")
-                  $saida = new MYSQLConnection();
+              if ( $tipo == self::DB_MYSQL)
+                  $saida = new MYSQLConnection($arr_conection, $var_name);
+              
+              
+              if ( $tipo == self::DB_ODBC)
+                  $saida = new ODBCConnection($arr_conection, $var_name);
+              
+              
+              if ( $tipo == self::DB_SQLSERVER)
+                  $saida = new MSSQLConnection($arr_conection, $var_name);
         
               return $saida;
     }
+    
+    
+    
+    const DB_POSTGRESQL = "postgres";
+    const DB_MYSQL = "mysql";
+    const DB_SQLSERVER = "sql server";
+    const DB_ODBC = "odbc";
 
 }
 /* 

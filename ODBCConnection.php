@@ -3,10 +3,10 @@
 class ODBCConnection implements IDbPersist{
 
 	//Retrieve a key=>value array with name of fields from specified table
-	function describleTable($name_table){
+	function describeTable($name_table){
 		
 		
-		$outval = odbc_columns($this->getConnection(), constant("odbc_database"), "%", $name_table, "%");
+		$outval = odbc_columns($this->getConnection(), $this->arr_conection["dbname"], "%", $name_table, "%");
 
 		$pages = array();
 		while (odbc_fetch_into($outval, $pages)) {
@@ -27,9 +27,18 @@ class ODBCConnection implements IDbPersist{
 		return $saida;
 		
 	}
-	
-	public static $_Conn;
-	public static $_nameConn = "conn_odbc";
+	  public $_Conn;
+	  public $_nomeConn= "conn_odbc";
+	  var $arr_conection;
+          
+          
+            function __construct( $arr_conection = array(), $name_conn = "conn_odbc"  ){
+
+                   $this->arr_conection = $arr_conection;
+                   $this->_nomeConn = $name_conn;
+
+            } 
+          
 	
 	var $character_open = "[";
 	var $character_close = "]";
@@ -38,17 +47,20 @@ class ODBCConnection implements IDbPersist{
 	//Connect to MS SQL DataBase
 	function connect(){        
 		
-		
+		if (is_null($this->arr_conection))
+                   return;
+            
+                  $arr_conection = $this->arr_conection;
 		
 		//$str_conection = "host=".constant("pg_host")." port=".constant("pg_port")." dbname=".constant("pg_database")." user=".constant("pg_user")." password=".constant("pg_pass");
 		
-		$conn =   odbc_connect(K_BDSERVER,constant("odbc_user"),constant("odbc_pass")) or die (" error on connect ");
+		$conn =   odbc_connect($arr_conection["host"],$arr_conection["user"],$arr_conection["password"]) or die (" error on connect ");
 			
 		if ( !$conn ){
 			die(" trouble when trying connect to MS SQL host ");
 		}
 		
-		$GLOBALS[ODBCConnection::$_nameConn] = $conn;
+		$GLOBALS[$this->_nameConn] = $conn;
 		//MSSQLConnection::$_Conn = $conn;
 		
 	}
@@ -56,13 +68,13 @@ class ODBCConnection implements IDbPersist{
 	//Get Current Connection.. if null  create new connection
 	function getConnection(){
 		
-		if ( ! isset( $GLOBALS[ODBCConnection::$_nameConn]  ))
+		if ( ! isset( $GLOBALS[$this->_nameConn]   ))
 			$this->connect();
 		
 		
 		//MSSQLConnection::$_Conn
 		
-		return  $GLOBALS[ODBCConnection::$_nameConn];
+		return  $GLOBALS[$this->_nameConn] ;
 		//return MSSQLConnection::$_Conn;
 		
 	}
@@ -74,7 +86,7 @@ class ODBCConnection implements IDbPersist{
 		
 		odbc_close( $conn);
 		
-		ODBCConnection::$_Conn = null;
+		$GLOBALS[$this->_nameConn] = null;
 		
 	}
 	

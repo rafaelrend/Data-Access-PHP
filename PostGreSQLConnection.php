@@ -2,7 +2,7 @@
 //Connect to postgre DataBase
 class PostGreSQLConnection implements IDbPersist{
 
-       function describleTable($name_table){
+       function describeTable($name_table){
 		
                 $arps = explode(".", $name_table );
            
@@ -34,9 +34,10 @@ class PostGreSQLConnection implements IDbPersist{
 		
 	}
 	
-	public static $_Conn;
-	public static $_nomeConn = "conn_pgsql";
-	
+	public $_Conn;
+	public $_nomeConn = "conn_pgsql";
+	var $arr_conection;
+        
 	function garanteSchema(){
 		
 		$conn = $this->getConnection();
@@ -46,28 +47,45 @@ class PostGreSQLConnection implements IDbPersist{
 			pg_query($conn, " set search_path = \"".constant("pg_schema")."\"");	
 		}	
 	}
+        
+        
+        function __construct( $arr_conection = array(), $name_conn = "conn_pgsql"  ){
+            
+               $this->arr_conection = $arr_conection;
+               $this->_nomeConn = $name_conn;
+               
+        } 
+        
 	
-	function connect(){
+	function connect(  ){
+            
+            if (is_null($this->arr_conection))
+                return;
+            
+            $arr_conection = $this->arr_conection;
+            
+            if ( @$arr_conection["port"] == "")
+                $arr_conection["port"] = 5432; 
 		
-		$str_conection = "host=".constant("pg_host")." port=".constant("pg_port")." dbname=".constant("pg_database")." user=".constant("pg_user")." password=".constant("pg_pass");
+		$str_conection = "host=".$arr_conection["host"]." port=". $arr_conection["port"]." dbname=". $arr_conection["dbname"]." user=".$arr_conection["user"]." password=".$arr_conection["password"];
 		
 		//die ( $str_conection );
 		$conn =   pg_connect($str_conection);
 		
-		if ( constant("pg_schema") != "" ){
+		if ( @$arr_conection["schema"]  != "" ){
 			
-			pg_query($conn, " set search_path = \"".constant("pg_schema")."\"");	
+			pg_query($conn, " set search_path = \"".$arr_conection["schema"]."\"");	
 		}
 		
 
 		
-		if ( constant("pg_initialcommand") != "" ){
+		if ( @$arr_conection["initialcommand"]  != "" ){
 				
-			pg_exec($conn, constant("pg_initialcommand"));
+			pg_exec($conn, $arr_conection["initialcommand"] );
 		}
-		if ( constant("pg_client_encoding") != "" ){
+		if ( @$arr_conection["client_encoding"]  != "" ){
 			
-		    pg_set_client_encoding($conn, constant("pg_client_encoding"));
+		    pg_set_client_encoding($conn, $arr_conection["client_encoding"]);
 		}
 		
 		
@@ -75,7 +93,7 @@ class PostGreSQLConnection implements IDbPersist{
 			die(" trouble when tried connect to PostGreSQL host ");
 		}
 		
-		$GLOBALS[PostGreSQLConnection::$_nomeConn] = $conn;
+		$GLOBALS[$this->_nomeConn] = $conn;
 		//PostGreSQLConnection::$_Conn = $conn;
 		
 	}
@@ -83,13 +101,13 @@ class PostGreSQLConnection implements IDbPersist{
 	
 	function getConnection(){
 		
-		if ( ! isset( $GLOBALS[PostGreSQLConnection::$_nomeConn]  ))
+		if ( ! isset( $GLOBALS[$this->_nomeConn]  ))
 			$this->connect();
 		
 		
 		//PostGreSQLConnection::$_Conn
 		
-		return  $GLOBALS[PostGreSQLConnection::$_nomeConn];
+		return  $GLOBALS[$this->_nomeConn];
 		//return PostGreSQLConnection::$_Conn;
 		
 	}
@@ -100,10 +118,13 @@ class PostGreSQLConnection implements IDbPersist{
 		
 		pg_close( $conn);
 		
-		PostGreSQLConnection::$_Conn = null;
+		$this->_Conn = null;
 		
 	}
 	
+        
+        
+        
 	function executeCommand($sql){
 		
 		
